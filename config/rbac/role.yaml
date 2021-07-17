@@ -1,0 +1,34 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - vvip.vviphw.io
+  resources:
+  - vvips
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - vvip.vviphw.io
+  resources:
+  - vvips/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - vvip.vviphw.io
+  resources:
+  - vvips/status
+  verbs:
+  - get
+  - patch
+  - update

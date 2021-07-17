@@ -1,0 +1,16 @@
+domain: vviphw.io
+layout:
+- go.kubebuilder.io/v3
+projectName: vvip-controller
+repo: github.com/vviphw04/vvip-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: vviphw.io
+  group: vvip
+  kind: Vvip
+  path: github.com/vviphw04/vvip-controller/api/v1
+  version: v1
+version: "3"

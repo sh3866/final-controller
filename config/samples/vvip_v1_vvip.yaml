@@ -1,0 +1,7 @@
+apiVersion: vvip.vviphw.io/v1
+kind: Vvip
+metadata:
+  name: vvip-sample
+spec:
+  # Add fields here
+  foo: bar

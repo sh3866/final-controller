@@ -1,0 +1,24 @@
+# permissions for end users to edit vvips.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vvip-editor-role
+rules:
+- apiGroups:
+  - vvip.vviphw.io
+  resources:
+  - vvips
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - vvip.vviphw.io
+  resources:
+  - vvips/status
+  verbs:
+  - get
