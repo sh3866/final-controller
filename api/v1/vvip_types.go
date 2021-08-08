@@ -29,13 +29,14 @@ type VvipSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Vvip. Edit vvip_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Size int32 `json:"size"`
 }
 
 // VvipStatus defines the observed state of Vvip
 type VvipStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Nodes []string `json:"nodes"`
 }
 
 //+kubebuilder:object:root=true
