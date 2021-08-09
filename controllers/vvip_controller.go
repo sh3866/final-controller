@@ -19,6 +19,9 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +30,10 @@ import (
 
 	"github.com/go-logr/logr"
 	vvipv1 "github.com/vviphw04/vvip-controller/api/v1"
+
+	// APis added
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // VvipReconciler reconciles a Vvip object
@@ -54,6 +61,37 @@ func (r *VvipReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	logger.Info("Reconcile logic start.")
 	// your logic here
 
+	reqLogger := r.Log.WithValues("req.Namespace", req.Namespace, "req.Name", req.Name)
+	vvip := &vvipv1.Vvip{}
+	err := r.Client.Get(context.TODO(), req.NamespacedName, vvip)
+
+	if err != nil && errors.IsNotFound(err) {
+		dep := r.deploymentForVvip(vvip)
+		err = r.Client.Create(context.TODO(), dep)
+
+		if err != nil {
+			reqLogger.Error(err, "Failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			return ctrl.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	podList := &corev1.PodList{}
+	ls := labelsForVvip(vvip.Name)
+	listOps := []client.ListOption{
+		client.InNamespace(req.NamespacedName.Namespace),
+		client.MatchingLabels(ls),
+	}
+	err = r.Client.List(context.TODO(), podList, listOps...)
+	if err != nil {
+		reqLogger.Error(err, "Failed to list pods.", "Vvip.Namespace", vvip.Namespace, "Vvip.Name", vvip.Name)
+		return ctrl.Result{}, err
+	}
+
+	podNames := getPodNames(podList.Items)
+
+	_ = podNames
+
 	logger.Info("Nothing happen. Please develop your reconcile logic")
 	return ctrl.Result{}, nil
 }
@@ -79,20 +117,40 @@ func (r *VvipReconciler) deploymentForVvip(v *vvipv1.Vvip) *appsv1.Deployment {
 			Selector: &v1.LabelSelector{
 				MatchLabels: ls,
 			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{{
-					Image:   "vvip:1.4.36-alpine",
-					Name:    "vvip",
-					Command: []string{"vvip", "-v=64", "-o", "modern", "-v"},
-					Ports: []corev1.ContainerPort{{
-						ContainerPort: 11211,
-						Name:          "vvip",
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: ls,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Image:   "vvip:1.4.36-alpine",
+						Name:    "vvip",
+						Command: []string{"vvip", "-v=64", "-o", "modern", "-v"},
+						Ports: []corev1.ContainerPort{{
+							ContainerPort: 11211,
+							Name:          "vvip",
+						}},
 					}},
-				}},
+				},
 			},
 		},
 	}
-	ctrl.SetControllerReference(m, dep, r.Scheme)
+	ctrl.SetControllerReference(v, dep, r.Scheme)
 
 	return dep
+}
+
+// labelsForVvip returns the labels for selecting the resources
+// belonging to the given vvip CR name.
+func labelsForVvip(name string) map[string]string {
+	return map[string]string{"app": "vvip", "vvip_cr": name}
+}
+
+// getPodNames returns the pod names of the array of pods passed in
+func getPodNames(pods []corev1.Pod) []string {
+	var podNames []string
+	for _, pod := range pods {
+		podNames = append(podNames, pod.Name)
+	}
+	return podNames
 }
