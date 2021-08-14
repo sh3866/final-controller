@@ -75,7 +75,7 @@ func (r *VvipReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the req.
-		reqLogger.Error(err, "Failed to get Memcached.")
+		reqLogger.Error(err, "Failed to get Vvip.")
 		return ctrl.Result{}, err
 	}
 
@@ -127,7 +127,7 @@ func (r *VvipReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		vvip.Status.Nodes = podNames
 		err := r.Client.Status().Update(context.TODO(), vvip)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Memcached status.")
+			reqLogger.Error(err, "Failed to update Vvip status.")
 			return ctrl.Result{}, err
 		}
 	}
@@ -139,7 +139,7 @@ func (r *VvipReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *VvipReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&vvipv1.Vvip{}).
-		Complete(r)
+		Complete(nil)
 }
 
 func (r *VvipReconciler) deploymentForVvip(v *vvipv1.Vvip) *appsv1.Deployment {
